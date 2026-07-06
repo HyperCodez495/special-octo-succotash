@@ -1,33 +1,51 @@
-name: Build Phantom
+name: Build Phantom DLL
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - uses: microsoft/setup-msbuild@v2
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
-      - name: Show files
+      - name: Show Project Files
         shell: cmd
         run: dir PhantomExec /s
 
-      - name: Restore
+      - name: Restore NuGet Packages
         run: nuget restore PhantomExec/Phantom.sln
 
-      - name: Build
-        run: msbuild PhantomExec/Phantom.sln /p:Configuration=Release /p:Platform=x64 /verbosity:normal
+      - name: Build DLL
+        run: >
+          msbuild PhantomExec/Phantom.sln
+          /p:Configuration=Release
+          /p:Platform=x64
+          /m
+          /verbosity:minimal
 
-      - name: Find EXEs
+      - name: Verify Build Output
         shell: cmd
-        run: dir /s *.exe
+        run: |
+          echo ===== Release Folder =====
+          dir PhantomExec\Release
 
-      - name: Upload
+      - name: Upload DLL
         uses: actions/upload-artifact@v4
         with:
-          name: PhantomEXE
-          path: "**/*.exe"
+          name: Phantom-Release-x64
+          path: |
+            PhantomExec/Release/Phantom.dll
+            PhantomExec/Release/Phantom.lib
+            PhantomExec/Release/Phantom.exp
+            PhantomExec/Release/Phantom.pdb
+          if-no-files-found: error

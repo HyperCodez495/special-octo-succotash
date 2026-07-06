@@ -1,0 +1,29 @@
+name: Build Phantom
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore PhantomExec/Phantom.sln
+
+      - name: Build
+        run: |
+          msbuild PhantomExec/Phantom.sln /p:Configuration=Release /p:Platform=x64
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: PhantomEXE
+          path: |
+            **/*.exe
